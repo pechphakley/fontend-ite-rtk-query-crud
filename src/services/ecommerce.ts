@@ -1,71 +1,101 @@
-import { UpdateProductType } from './../components/tables/Columns';
+import {
+  CreateProductType,
+  ProductResponse,
+  ProductType,
+  UpdateProductType,
+} from "@/lib/products";
+import { BrandResponse, CategoryResponse, ContentResponse, SelectOption } from "@/lib/type/typeFilter";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import { CreateProductType, ProductResponse, ProductType } from '@/lib/products';
-import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react'
+export const ecommerceApi = createApi({
+  reducerPath: "ecommerceApi",
 
-
-export const ecommerceApi= createApi({
-  reducerPath: 'ecommerceApi',
-  baseQuery: fetchBaseQuery({baseUrl: `${process.env.NEXT_PUBLIC_ISHOP_BASE_URL}`}),
-    tagTypes: ["Products"],
-
-  endpoints: (builder)=>({
+  baseQuery: fetchBaseQuery({
+    baseUrl: `${process.env.NEXT_PUBLIC_ISHOP_BASE_URL}`,
+  }),
+  tagTypes: ["Products", "Files"],
+  endpoints: (builder) => ({
     // getAllProducts
-     getAllProduct: builder.query<ProductResponse,{page:number,size:number}>({
-      query: ({page, size}) => `/products?page=${page}&size=${size}`,
-       providesTags: ["Products"]
-     }),
+    getAllProduct: builder.query<
+      ProductResponse,
+      { page: number; size: number }
+    >({
+      query: ({ page, size }) => `/products?page=${page}&size=${size}`,
+      providesTags: ["Products"],
+    }),
     //  getProductByUUid
     getProductByUuid: builder.query<ProductType, string>({
       query: (uuid: string) => ({
-        url: `/products/${uuid}`,providesTags: ["Products"]
-      })
+        url: `/products/${uuid}`,
+        providesTags: ["Products"],
+      }),
     }),
     // create Product
-    createProduct : builder.mutation<CreateProductType,unknown,unknown>({
-      query: (newProduct:CreateProductType)=> ({
-         url: `/products`,
-         method: 'POST',
-         headers: {
-          'content-type': 'application/json',
-          Authorization: `bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`
-         },
-         body: newProduct
+    createProduct: builder.mutation<CreateProductType, unknown>({
+      query: (newProduct: CreateProductType) => ({
+        url: `/products`,
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
+        },
+        body: newProduct,
       }),
-            invalidatesTags: ["Products"]
+      invalidatesTags: ["Products"],
     }),
-    updateProduct: builder.mutation<
-      ProductType, 
-      { uuid: string; data: UpdateProductType }>({
-      query: ({ uuid, data }) => ({
+
+    updateProduct: builder.mutation<UpdateProductType, unknown>({
+      query: ({ updateProduct, uuid, accessToken }) => ({
         url: `/products/${uuid}`,
         method: "PUT",
-           headers: {
-            "Content-Type": "application/json",
-            Authorization: `bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
-          },
-        body: data,
+        headers: {
+          "content-type": "application/json",
+          authorization: `bearer ${accessToken}`,
+        },
+        body: updateProduct,
       }),
-            invalidatesTags: ["Products"]
+      invalidatesTags: ["Products"],
     }),
-    deleteProduct: builder.mutation<void, string>({
-      query: (uuid) => ({
+
+    deleteProductByUuid: builder.mutation<string, unknown>({
+      query: ({ uuid, accessToken }) => ({
         url: `/products/${uuid}`,
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
-          },
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          authorization: `bearer ${accessToken}`,
+        },
       }),
-            invalidatesTags: ["Products"]
-    })
-  })
-})
+      invalidatesTags: ["Products"],
+    }),
+
+    getCategory: builder.query<ContentResponse<SelectOption>, void>({
+      query: () => ({
+        url: `/categories`
+      }),
+    }),
+    getSupplier: builder.query<ContentResponse<SelectOption>, void>({
+      query: () => ({
+        url: `/suppliers`
+      }),
+    }),
+    getBrand: builder.query<ContentResponse<SelectOption>, void>({
+      query: () => ({
+        url: `/brands`
+      }),
+    }),
+
+  }),
+});
 
 export const {
- useGetAllProductQuery,
- useGetProductByUuidQuery, 
- useCreateProductMutation,
- useDeleteProductMutation,
- useUpdateProductMutation
+  useGetAllProductQuery,
+  useGetProductByUuidQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductByUuidMutation,
+  // useUploadFileMutation,
+  useGetCategoryQuery,
+  useGetSupplierQuery,
+  useGetBrandQuery
 } = ecommerceApi;
